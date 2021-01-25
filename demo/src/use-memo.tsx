@@ -2,7 +2,10 @@ import { h, render, useState, useMemo, useEffect } from '../../src'
 
 function Counter() {
   const [count, setCount] = useState(0)
-  const one = useMemo(() => 1, [])
+  const one = useMemo(() => {
+    console.log('memo')
+    return 1;
+  }, [])
 
   console.log(one)
   useEffect(() => {

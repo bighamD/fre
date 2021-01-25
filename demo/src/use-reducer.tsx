@@ -14,7 +14,9 @@ function Counter() {
 
   return (
     <div>
-      <button onClick={() => dispatch({ type: 'create' })}>-</button>
+      <button onClick={() => dispatch({ type: 'create' })}>+</button>
+      <button onClick={() => dispatch({ type: 'clear' })}>-</button>
+
       <ul>
         {data.data.map(item => {
           const val = <p>hello</p>

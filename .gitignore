@@ -11,3 +11,6 @@ demo/**/.cache/
 demo/**/dist/
 /dist/
 /**/node_modules/
+/src/
+
+/demo/

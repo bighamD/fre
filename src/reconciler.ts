@@ -24,9 +24,11 @@ export const render = (vnode: FreElement, node: Node, done?: () => void): void =
 }
 
 export const dispatchUpdate = (fiber?: IFiber) => {
+  // 比如一个for循环多次调用，只应该有一个reconcileWork，使用dirty标记
   if (fiber && !fiber.dirty) {
     fiber.dirty = true
     fiber.tag = OP.UPDATE
+    // 任务调度
     scheduleWork(reconcileWork.bind(null, fiber), fiber.time)
   }
 }
@@ -41,11 +43,23 @@ const reconcileWork = (WIP?: IFiber): boolean => {
 const reconcile = (WIP: IFiber): IFiber | undefined => {
   isFn(WIP.type) ? updateHook(WIP) : updateHost(WIP)
   WIP.dirty = WIP.dirty ? false : 0
-
+/*
+ * 
+ *  One of the goals of this data structure is to make it easy to find the next unit of work. 
+ *  That’s why each fiber has a link to its first child, its next sibling and its parent.
+    When we finish performing work on a fiber, if it has a child that fiber will be the next unit of work.
+    From our example, when we finish working on the div fiber the next unit of work will be the h1 fiber.
+    Like a and h2 fibers from the example.If the fiber doesn’t have a child, we use the sibling as the next unit of work.
+    For example, the p fiber doesn’t have a child so we move to the a fiber after finishing it.
+    And if the fiber doesn’t have a child nor a sibling we go to the “uncle”: the sibling of the parent.
+    Also, if the parent doesn’t have a sibling, we keep going up through the parents until we find one
+    with a sibling or until we reach the root. If we have reached the root, 
+    it means we have finished performing all the work for this render.
+ */
   if (WIP.child) return WIP.child
   while (WIP) {
     if (!preCommit && WIP.dirty === false) {
-      preCommit = WIP
+      preCommit = WIP 
       WIP.sibling = null
       return null
     }
@@ -60,7 +74,7 @@ const updateHook = <P = Attributes>(WIP: IFiber): void => {
   let start = getTime()
   let children = (WIP.type as FC<P>)(WIP.props)
   WIP.time = getTime() - start
-  resetCursor()
+  resetCursor() // 将hook的索引重置，下次dispatchUpdate重0开始
   if (isStr(children)) children = createText(children as string)
   reconcileChildren(WIP, children)
 }
@@ -87,7 +101,7 @@ const reconcileChildren = (WIP: any, children: FreNode): void => {
     oldTail = oldKids.length - 1,
     newTail = newKids.length - 1,
     map = null
-
+  // 跟vue一样的diff，只不过对dom的操作放在commitWork中
   while (oldHead <= oldTail && newHead <= newTail) {
     let newFiber = null
     if (oldKids[oldHead] == null) {
@@ -159,7 +173,7 @@ const reconcileChildren = (WIP: any, children: FreNode): void => {
       }
     }
   }
-
+  // 生成fiber的数据结构 链表
   for (var i = 0, prev = null; i < newKids.length; i++) {
     const child = newKids[i]
     child.parent = WIP
@@ -202,6 +216,7 @@ const getChild = (WIP: IFiber): any => {
   }
 }
 
+// 通过effectTag更新真实的dom
 const commit = (fiber: IFiber): void => {
   if (!fiber) return
   let { type, tag, parentNode, node, ref, hooks } = fiber

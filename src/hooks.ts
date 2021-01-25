@@ -66,5 +66,11 @@ export const getHook = <S = Function | undefined, Dependency = any>(cursor: numb
 }
 
 export const isChanged = (a: DependencyList, b: DependencyList) => {
+  // 有以下情况
+  /**
+   * 1.没设置依赖 则视为每次依赖都改变
+   * 2.依赖有增加或者减少
+   * 3.依赖有变化
+   */
   return !a || a.length !== b.length || b.some((arg, index) => arg !== a[index])
 }
