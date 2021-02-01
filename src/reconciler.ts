@@ -94,6 +94,7 @@ const updateHost = (WIP: IFiber): void => {
 }
 
 const reconcileChildren = (WIP: any, children: FreNode): void => {
+<<<<<<< HEAD
   let oldKids = WIP.kids || [],
     newKids = (WIP.kids = arrayfy(children) as any),
     oldHead = 0,
@@ -134,48 +135,96 @@ const reconcileChildren = (WIP: any, children: FreNode): void => {
       newFiber.insertPoint = oldKids[oldHead].node
       oldTail--
       newHead++
+=======
+  let aCh = WIP.kids || [],
+    bCh = (WIP.kids = arrayfy(children) as any),
+    aHead = 0,
+    bHead = 0,
+    aTail = aCh.length - 1,
+    bTail = bCh.length - 1,
+    map = null,
+    ch = Array(bCh.length)
+
+  while (aHead <= aTail && bHead <= bTail) {
+    let temp = null
+    if (aCh[aHead] == null) {
+      aHead++
+    } else if (aCh[aTail] == null) {
+      aTail--
+    } else if (same(aCh[aHead], bCh[bHead])) {
+      temp = bCh[bHead]
+      clone(temp, aCh[aHead])
+      temp.tag = OP.UPDATE
+      ch[bHead] = temp
+      aHead++
+      bHead++
+    } else if (same(aCh[aTail], bCh[bTail])) {
+      temp = bCh[bTail]
+      clone(temp, aCh[aTail])
+      temp.tag = OP.UPDATE
+      ch[bTail] = temp
+      aTail--
+      bTail--
+    } else if (same(aCh[aHead], bCh[bTail])) {
+      temp = bCh[bTail]
+      clone(temp, aCh[aHead])
+      temp.tag = OP.MOUNT
+      temp.insertPoint = aCh[aTail].node.nextSibling
+      ch[bTail] = temp
+      aHead++
+      bTail--
+    } else if (same(aCh[aTail], bCh[bHead])) {
+      temp = bCh[bHead]
+      clone(temp, aCh[aTail])
+      temp.tag = OP.MOUNT
+      temp.insertPoint = aCh[aHead].node
+      ch[bHead] = temp
+      aTail--
+      bHead++
+>>>>>>> upstream/master
     } else {
       if (!map) {
         map = new Map()
-        let i = newHead
-        while (i < newTail) map.set(getKey(newKids[i]), i++)
+        let i = bHead
+        while (i < bTail) map.set(getKey(bCh[i]), i++)
       }
-      if (map.has(getKey(oldKids[oldHead]))) {
-        const i = map.get(oldKids[oldHead])
-        const oldKid = oldKids[i]
-        newFiber = newKids[newHead]
-        clone(newFiber, oldKid)
-        newFiber.tag = OP.MOUNT
-        oldKids[i] = null
-        newFiber.insertPoint = oldKids[oldHead]?.node
+      if (map.has(getKey(aCh[aHead]))) {
+        const oldKid = aCh[map.get(aCh[aHead])]
+        temp = bCh[bHead]
+        clone(temp, oldKid)
+        temp.tag = OP.MOUNT
+        aCh[i] = null
+        temp.insertPoint = aCh[aHead]?.node
+        ch[bHead] = temp
       } else {
-        newFiber = newKids[newHead]
-        newFiber.tag = OP.INSERT
-        newFiber.node = null
-        newFiber.insertPoint = oldKids[oldHead]?.node
+        temp = bCh[bHead]
+        temp.tag = OP.INSERT
+        temp.node = null
+        temp.insertPoint = aCh[aHead]?.node
       }
-      newHead++
+      bHead++
     }
   }
-  if (oldTail < oldHead) {
-    for (let i = newHead; i <= newTail; i++) {
-      let newFiber = newKids[i]
-      newFiber.tag = OP.INSERT
-      newFiber.node = null
-      newFiber.insertPoint = oldKids[oldHead]?.node
-    }
-  } else if (newHead > newTail) {
-    for (let i = oldHead; i <= oldTail; i++) {
-      let oldFiber = oldKids[i]
-      if (oldFiber) {
-        oldFiber.tag = OP.REMOVE
-        deletes.push(oldFiber)
-      }
-    }
+  const before = ch[bTail+1]?.node
+  while (bHead <= bTail) {
+    let temp = bCh[bHead]
+    temp.tag = OP.INSERT
+    temp.node = null
+
+    temp.insertPoint = before
+    bHead++
   }
-  // 生成fiber的数据结构 链表
-  for (var i = 0, prev = null; i < newKids.length; i++) {
-    const child = newKids[i]
+  while (aHead <= aTail) {
+    let oldFiber = aCh[aHead]
+    if (oldFiber) {
+      oldFiber.tag = OP.REMOVE
+      deletes.push(oldFiber)
+    }
+    aHead++
+  }
+
+  for (var i = 0, prev = null; i < bCh.length; i++) {
+    const child = bCh[i]
     child.parent = WIP
     if (i > 0) {
       prev.sibling = child
@@ -247,7 +296,6 @@ const commit = (fiber: IFiber): void => {
   }
   if (tag & OP.INSERT) {
     const after = fiber.insertPoint as any
-    if (after === null && fiber.node === parentNode.lastChild) return
     parentNode.insertBefore(fiber.node, after)
   }
   fiber.tag = 0

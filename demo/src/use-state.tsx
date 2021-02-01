@@ -2,29 +2,12 @@ import { h, render, useLayout, useEffect, useState } from '../../src/index'
 
 function App() {
   const [count, setCount] = useState(0)
-  // const [two, setTwo] = useState(0)
-  useEffect(() => {
-    console.log('effect')
-    // const btn = document.querySelector('#btn')
-    // console.log(btn.textContent)
-    return () => {
-      console.log('effect clean')
-    }
-  })
-  useLayout(() => {
-    // const btn = document.querySelector('#btn')
-    // if (btn) {
-    //    btn.textContent = '1234';
-    // }
-    console.log('layout');
-    return () => {
-      console.log('layout clean')
-    }
-  })
+  const [two, setTwo] = useState(0)
+  console.log(count,two)
   return (
     <div>
-      <button id="btn" onClick={() => setCount(() => count + 1)}>{count}{count}</button>
-      <Button></Button>
+      <button onClick={() => setCount(count + 1)}>{count}</button>
+      <button onClick={() => setTwo(two + 1)}>{two}</button>
     </div>
   )
 }
